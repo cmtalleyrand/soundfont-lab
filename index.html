@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoundFont Lab</title>
+  <link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+  <header>
+    <h1>SoundFont Lab</h1>
+    <p class="subtitle">AI powered soundfont inspection and creation</p>
+  </header>
+
+  <main>
+    <section id="upload-section">
+      <div id="drop-zone" class="drop-zone">
+        <p>Drop an SF2 file here or <label for="file-input" class="file-label">browse</label></p>
+        <input type="file" id="file-input" accept=".sf2" hidden>
+      </div>
+      <div id="file-info" class="file-info hidden"></div>
+    </section>
+
+    <section id="bank-view" class="hidden">
+      <h2>Banks &amp; Presets</h2>
+      <div id="bank-tree" class="bank-tree"></div>
+      <div class="actions">
+        <button id="split-all-btn" class="btn btn-primary">Split All Banks</button>
+      </div>
+    </section>
+
+    <section id="status-section" class="hidden">
+      <div id="status-message"></div>
+    </section>
+  </main>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
