@@ -5,7 +5,8 @@
  */
 
 import { parseSF2, getSF2Summary } from './sf2-parser.js';
-import { splitBanks, previewSplit } from './bank-splitter.js';
+import { splitBanks } from './bank-splitter.js';
+import { parseNotationInput } from './notation.js';
 
 let currentSF2 = null;
 let currentFileName = '';
@@ -15,10 +16,19 @@ const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const fileInfo = document.getElementById('file-info');
 const bankView = document.getElementById('bank-view');
-const bankTree = document.getElementById('bank-tree');
+const bankTableBody = document.getElementById('bank-table-body');
 const splitAllBtn = document.getElementById('split-all-btn');
 const statusSection = document.getElementById('status-section');
 const statusMessage = document.getElementById('status-message');
+
+const notationForm = document.getElementById('notation-form');
+const notationMode = document.getElementById('notation-mode');
+const notationL = document.getElementById('notation-l');
+const notationM = document.getElementById('notation-m');
+const notationK = document.getElementById('notation-k');
+const notationInput = document.getElementById('notation-input');
+const notationResult = document.getElementById('notation-result');
+const notationResultBody = document.getElementById('notation-result-body');
 
 // --- File handling ---
 
@@ -60,7 +70,7 @@ async function handleFile(file) {
     const summary = getSF2Summary(currentSF2);
 
     displayFileInfo(summary, file.size);
-    displayBankTree(summary);
+    displayBankTable(summary);
 
     bankView.classList.remove('hidden');
     statusSection.classList.add('hidden');
@@ -72,52 +82,45 @@ async function handleFile(file) {
 
 function displayFileInfo(summary, fileSize) {
   const sizeMB = (fileSize / (1024 * 1024)).toFixed(2);
+
   fileInfo.innerHTML = `
-    <strong>${summary.name}</strong> (${sizeMB} MB)<br>
-    Version: ${summary.version} |
-    Presets: ${summary.totalPresets} |
-    Instruments: ${summary.totalInstruments} |
-    Samples: ${summary.totalSamples}
-    ${summary.author ? `<br>Author: ${summary.author}` : ''}
+    <h3>SoundFont Details</h3>
+    <table class="meta-table">
+      <tbody>
+        <tr><th>Name</th><td>${escapeHtml(summary.name)}</td></tr>
+        <tr><th>File size</th><td>${sizeMB} MB</td></tr>
+        <tr><th>Version</th><td>${escapeHtml(summary.version)}</td></tr>
+        <tr><th>Presets</th><td>${summary.totalPresets}</td></tr>
+        <tr><th>Instruments</th><td>${summary.totalInstruments}</td></tr>
+        <tr><th>Samples</th><td>${summary.totalSamples}</td></tr>
+        <tr><th>Author</th><td>${escapeHtml(summary.author || '—')}</td></tr>
+        <tr><th>Engine</th><td>${escapeHtml(summary.engine || '—')}</td></tr>
+        <tr><th>Comment</th><td>${escapeHtml(summary.comment || '—')}</td></tr>
+      </tbody>
+    </table>
   `;
+
   fileInfo.classList.remove('hidden');
 }
 
-function displayBankTree(summary) {
-  bankTree.innerHTML = '';
+function displayBankTable(summary) {
+  bankTableBody.innerHTML = '';
 
   const bankEntries = Object.entries(summary.banks);
 
   for (const [bankNum, presets] of bankEntries) {
-    const group = document.createElement('div');
-    group.className = 'bank-group';
-
-    const header = document.createElement('div');
-    header.className = 'bank-header';
-    header.innerHTML = `
-      <h3>Bank ${bankNum}</h3>
-      <span class="preset-count">${presets.length} preset${presets.length !== 1 ? 's' : ''}</span>
-    `;
-
-    const list = document.createElement('ul');
-    list.className = 'preset-list';
-
     for (const p of presets) {
-      const li = document.createElement('li');
-      li.innerHTML = `<span class="preset-num">${String(p.preset).padStart(3, '0')}</span> ${escapeHtml(p.name)}`;
-      list.appendChild(li);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${bankNum}</td>
+        <td><span class="preset-badge">${String(p.preset).padStart(3, '0')}</span></td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${presets.length}</td>
+      `;
+      bankTableBody.appendChild(row);
     }
-
-    header.addEventListener('click', () => {
-      list.classList.toggle('expanded');
-    });
-
-    group.appendChild(header);
-    group.appendChild(list);
-    bankTree.appendChild(group);
   }
 
-  // Add individual bank download buttons
   if (bankEntries.length > 1) {
     splitAllBtn.textContent = `Split All ${bankEntries.length} Banks`;
     splitAllBtn.style.display = '';
@@ -147,6 +150,42 @@ splitAllBtn.addEventListener('click', () => {
   } catch (err) {
     showStatus(`Error splitting: ${err.message}`, 'error');
     console.error(err);
+  }
+});
+
+// --- Notation ---
+
+notationForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  notationResultBody.innerHTML = '';
+
+  try {
+    const rows = parseNotationInput({
+      input: notationInput.value,
+      mode: notationMode.value,
+      key: notationK.value.trim(),
+      meter: notationM.value,
+      length: notationL.value,
+    });
+
+    for (const row of rows) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(row.raw)}</td>
+        <td>${escapeHtml(row.mode)}</td>
+        <td>${escapeHtml(row.pitchClass)}</td>
+        <td>${row.octave}</td>
+        <td>${escapeHtml(row.duration)}</td>
+        <td><code>${escapeHtml(row.abc)}</code></td>
+        <td>${escapeHtml(row.keyContext)}</td>
+      `;
+      notationResultBody.appendChild(tr);
+    }
+
+    notationResult.classList.remove('hidden');
+    showStatus(`Parsed ${rows.length} note token${rows.length === 1 ? '' : 's'} with L:${notationL.value}, M:${notationM.value}, K:${notationK.value}.`, 'success');
+  } catch (err) {
+    showStatus(`Notation parse error: ${err.message}`, 'error');
   }
 });
 

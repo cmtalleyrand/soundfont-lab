@@ -13,7 +13,8 @@
   </header>
 
   <main>
-    <section id="upload-section">
+    <section id="upload-section" class="panel">
+      <h2>1) Upload SoundFont</h2>
       <div id="drop-zone" class="drop-zone">
         <p>Drop an SF2 file here or <label for="file-input" class="file-label">browse</label></p>
         <input type="file" id="file-input" accept=".sf2" hidden>
@@ -21,15 +22,86 @@
       <div id="file-info" class="file-info hidden"></div>
     </section>
 
-    <section id="bank-view" class="hidden">
-      <h2>Banks &amp; Presets</h2>
-      <div id="bank-tree" class="bank-tree"></div>
+    <section id="bank-view" class="hidden panel">
+      <h2>2) Banks &amp; Presets (Detailed)</h2>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Bank</th>
+              <th>Preset #</th>
+              <th>Preset Name</th>
+              <th>Presets in Bank</th>
+            </tr>
+          </thead>
+          <tbody id="bank-table-body"></tbody>
+        </table>
+      </div>
       <div class="actions">
         <button id="split-all-btn" class="btn btn-primary">Split All Banks</button>
       </div>
     </section>
 
-    <section id="status-section" class="hidden">
+    <section class="panel">
+      <h2>3) Notation Input (ABC + Hybrid SPN/ABC)</h2>
+      <form id="notation-form" class="notation-form">
+        <div class="settings-grid">
+          <label>Mode
+            <select id="notation-mode">
+              <option value="pure-abc">Pure ABC</option>
+              <option value="hybrid">Hybrid SPN/ABC</option>
+            </select>
+          </label>
+          <label>L (default note length)
+            <select id="notation-l">
+              <option>1/16</option>
+              <option selected>1/8</option>
+              <option>1/4</option>
+              <option>1/2</option>
+              <option>1/1</option>
+            </select>
+          </label>
+          <label>M (meter)
+            <select id="notation-m">
+              <option>4/4</option>
+              <option>3/4</option>
+              <option>6/8</option>
+              <option>2/4</option>
+              <option>12/8</option>
+            </select>
+          </label>
+          <label>K (key)
+            <input id="notation-k" value="C" required>
+          </label>
+        </div>
+
+        <label for="notation-input">Note input</label>
+        <textarea id="notation-input" rows="4" placeholder="Pure ABC examples: ^c'2 _G,3/2&#10;Hybrid examples: C#⁴4 Gb⁶3/2" required></textarea>
+        <button class="btn btn-primary" type="submit">Parse notation</button>
+      </form>
+
+      <div id="notation-result" class="hidden">
+        <h3>Parsed notes (full detail)</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Raw Token</th>
+                <th>Mode</th>
+                <th>Pitch Class</th>
+                <th>Octave</th>
+                <th>Duration</th>
+                <th>Normalized ABC</th>
+                <th>K Context</th>
+              </tr>
+            </thead>
+            <tbody id="notation-result-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="status-section" class="hidden panel">
       <div id="status-message"></div>
     </section>
   </main>
